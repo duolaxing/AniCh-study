@@ -50,12 +50,13 @@ class DanmakuSourcesPanel extends StatelessWidget {
                     title: const Text('弹幕源'),
                     subtitle: Text(
                         '当前第 ${controller.episode} 集 · 共 ${manager.enabledCount + (serverEnabled ? serverCount : 0)} 条已启用弹幕')),
-                SwitchListTile(
-                    title: const Text('服务端弹幕'),
-                    subtitle:
-                        Text(serverEnabled ? '$serverCount 条' : '已关闭，仅影响此来源'),
-                    value: serverEnabled,
-                    onChanged: controller.setServerDanmakuEnabled),
+                if (!controller.isWebsiteOnly)
+                  SwitchListTile(
+                      title: const Text('服务端弹幕'),
+                      subtitle:
+                          Text(serverEnabled ? '$serverCount 条' : '已关闭，仅影响此来源'),
+                      value: serverEnabled,
+                      onChanged: controller.setServerDanmakuEnabled),
                 for (final provider in DanmakuProvider.values)
                   _source(context, provider),
               ]));

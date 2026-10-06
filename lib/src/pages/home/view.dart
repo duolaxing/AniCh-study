@@ -10,6 +10,7 @@ import 'package:xs/src/widgets/drag_to_move_bar.dart';
 import 'package:xs/src/widgets/multi_sliver_compat/sliver_persistent_header_delegate.dart';
 import 'package:xs/src/widgets/navbar.dart';
 import 'package:xs/src/widgets/search_bar.dart';
+import 'package:xs/src/services/open_website_video.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -158,6 +159,10 @@ class HomePage extends StatelessWidget {
                       .animate(controller.animationController),
                   child: NavBar(
                     children: [
+                      NavItem(
+                          icon: Icons.video_library_outlined,
+                          title: '网站资源',
+                          onTap: openWebsiteVideo),
                       NavItem(
                           icon: Icons.movie,
                           title: '番剧',

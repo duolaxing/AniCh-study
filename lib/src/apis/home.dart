@@ -5,6 +5,8 @@ import 'package:xs/src/config.dart';
 
 final api = Dio(BaseOptions(
     baseUrl: AppConfig.baseUrl,
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 15),
     headers: {HttpHeaders.userAgentHeader: AppConfig.ua}));
 
 class HomeApi {

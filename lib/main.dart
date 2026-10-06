@@ -38,7 +38,7 @@ void main() async {
   PaintingBinding.instance.imageCache.maximumSize = 1000000;
   PaintingBinding.instance.imageCache.maximumSizeBytes = 300 << 20;
   // 配置初始化
-  AppConfig.init();
+  await AppConfig.init();
   // 主题初始化
   ThemeSettingsStorage.init();
   // 历史记录初始化

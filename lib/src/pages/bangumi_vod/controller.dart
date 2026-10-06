@@ -20,6 +20,7 @@ import 'package:xs/src/services/episode_danmaku.dart';
 import 'package:xs/src/services/platform_danmaku.dart';
 import 'package:xs/src/services/website_sources.dart';
 import 'package:xs/src/utils/subtitle_language.dart';
+import 'package:xs/src/utils/website_playback.dart';
 import 'package:xs/src/pages/settings/storage/play_history_storage.dart';
 import 'package:xs/src/utils/time.dart';
 import 'package:xs/src/widgets/danmaku_settings/storage.dart';
@@ -48,12 +49,16 @@ class BangumiVodPageController extends PlayerController
   BangumiVodPageController({
     required this.pId,
     required this.pEpisode,
+    this.initialWebsiteStream,
   }) {
     rxId = pId.obs;
     rxEpisode = pEpisode.obs;
   }
 
   late RxInt rxId;
+  final WebsiteStream? initialWebsiteStream;
+  bool get isWebsiteOnly => initialWebsiteStream != null;
+  bool _initialWebsiteUsed = false;
   int get id => rxId.value;
   late RxInt rxEpisode;
   int get episode => rxEpisode.value;
@@ -200,6 +205,10 @@ class BangumiVodPageController extends PlayerController
         bangumiInfo['title'] = data.title;
         bangumiInfo['date'] = date;
         bangumiInfo['image'] = data.image;
+        if (isWebsiteOnly) {
+          bangumiInfo['websiteEpisode'] =
+              initialWebsiteStream!.episode.toJson();
+        }
         final episodeInfo = {
           'episode': episode,
           'title': '第$episode集 ${episodeDetail.title}',
@@ -283,6 +292,7 @@ class BangumiVodPageController extends PlayerController
 
   // 获取番剧数据
   void getBangumiData() async {
+    if (isWebsiteOnly) return;
     if (_bangumiDataRequested || leave.value) return;
     _bangumiDataRequested = true;
     try {
@@ -315,6 +325,7 @@ class BangumiVodPageController extends PlayerController
 
   // 获取番剧剧集
   void getBangumiEpisodes() async {
+    if (isWebsiteOnly) return;
     if (_bangumiEpisodesRequested || leave.value) return;
     _bangumiEpisodesRequested = true;
     try {
@@ -336,6 +347,7 @@ class BangumiVodPageController extends PlayerController
 
   // 获取服务端弹幕，关闭时取消请求并丢弃已在途的响应。
   void getDanmaku() async {
+    if (isWebsiteOnly) return;
     if (!serverDanmakuState.value || leave.value) return;
     _serverRequest?.cancel('Reloaded');
     final token = CancelToken();
@@ -379,6 +391,10 @@ class BangumiVodPageController extends PlayerController
 
   @override
   void setServerDanmakuEnabled(bool enabled) {
+    if (isWebsiteOnly) {
+      serverDanmakuState(false);
+      return;
+    }
     super.setServerDanmakuEnabled(enabled);
     sourceStorage.write('server-danmaku:$id:$episode', enabled);
     _serverRequest?.cancel('Source changed');
@@ -398,6 +414,7 @@ class BangumiVodPageController extends PlayerController
   }
 
   void loadAutomaticDanmaku() {
+    if (isWebsiteOnly) return;
     if (externalDanmaku.episodeKey != '$id:$episode' || leave.value) return;
     final current = getEpisodeData();
     for (final provider in DanmakuProvider.values) {
@@ -440,6 +457,12 @@ class BangumiVodPageController extends PlayerController
     final stream = await Get.to<WebsiteStream>(
         () => WebsiteSourcePicker(keyword: data.title ?? ''));
     if (stream == null || key != '$id:$episode' || leave.value) return;
+    if (isWebsiteOnly) {
+      Get.offNamed('/website_player',
+          arguments: websitePlaybackArguments(stream),
+          preventDuplicates: false);
+      return;
+    }
     final stored = sourceStorage.read('website-matches:$key');
     final matches = <String, dynamic>{
       if (stored is Map) ...Map<String, dynamic>.from(stored)
@@ -513,6 +536,24 @@ class BangumiVodPageController extends PlayerController
     websiteError('');
     currentLineInfo('获取中...');
     currentLineIndex = -1;
+    if (isWebsiteOnly) {
+      try {
+        final stream = !_initialWebsiteUsed
+            ? initialWebsiteStream!
+            : await websiteSources.resolve(initialWebsiteStream!.episode,
+                token: token);
+        _initialWebsiteUsed = true;
+        if (session != _videoSession || leave.value || token.isCancelled)
+          return;
+        _appendWebsiteStream(stream, play: true);
+      } catch (_) {
+        if (session != _videoSession || leave.value || token.isCancelled)
+          return;
+        currentLineInfo('网站资源加载失败');
+        websiteError('请重新搜索网站资源，获取有效播放地址。');
+      }
+      return;
+    }
     unawaited(_restoreWebsiteStreams(session, token));
     try {
       final response = await BangumiApi.getBangumiEpisodeVod(
@@ -595,9 +636,9 @@ class BangumiVodPageController extends PlayerController
     _lastDanmakuPosition = null;
     serverDanmakuCount(0);
     _serverRequest?.cancel('Episode changed');
-    serverDanmakuState(
-        sourceStorage.read<bool>('server-danmaku:$id:$episode') ??
-            DanmakuSettingsStorage.serverDanmakuEnable.value);
+    serverDanmakuState(!isWebsiteOnly &&
+        (sourceStorage.read<bool>('server-danmaku:$id:$episode') ??
+            DanmakuSettingsStorage.serverDanmakuEnable.value));
     externalDanmaku.open('$id:$episode', defaults: {
       DanmakuProvider.bilibili:
           DanmakuSettingsStorage.bilibiliDanmakuEnable.value,

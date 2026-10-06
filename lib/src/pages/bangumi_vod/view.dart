@@ -41,8 +41,12 @@ class BangumiVodPageState extends State<BangumiVodPage> {
     episodes = Get.arguments['episodes'];
     episode = Get.arguments['episode'];
     return GetBuilder(
+        global: Get.arguments['websiteStream'] == null,
         id: Get.currentRoute,
-        init: BangumiVodPageController(pId: id, pEpisode: episode),
+        init: BangumiVodPageController(
+            pId: id,
+            pEpisode: episode,
+            initialWebsiteStream: Get.arguments['websiteStream']),
         builder: (controller) {
           if (data != null) {
             controller.setBangumiData(data);
@@ -69,6 +73,8 @@ class BangumiVodPageState extends State<BangumiVodPage> {
                 ),
               );
             } else {
+              if (controller.isWebsiteOnly)
+                return buildWebsitePage(context, controller);
               return buildPageUI(controller);
             }
           });
@@ -289,6 +295,36 @@ class BangumiVodPageState extends State<BangumiVodPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget buildWebsitePage(
+      BuildContext context, BangumiVodPageController controller) {
+    final panel = ListView(padding: const EdgeInsets.all(12), children: [
+      Text(controller.initialWebsiteStream!.title),
+      ResourceSourcesPanel(controller: controller),
+      DanmakuSourcesPanel(controller: controller),
+    ]);
+    return Scaffold(
+      appBar: AppBar(title: Text(controller.data.title ?? '网站播放')),
+      body: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
+        if (constraints.maxWidth >= 1000) {
+          return Row(children: [
+            Expanded(
+                child: ColoredBox(
+                    color: Colors.black,
+                    child: Center(
+                        child: AspectRatio(
+                            aspectRatio: 16 / 9,
+                            child: buildMediaPlayer(controller))))),
+            SizedBox(width: 420, child: panel),
+          ]);
+        }
+        return Column(children: [
+          AspectRatio(aspectRatio: 16 / 9, child: buildMediaPlayer(controller)),
+          Expanded(child: panel),
+        ]);
+      })),
     );
   }
 

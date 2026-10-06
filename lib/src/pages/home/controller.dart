@@ -61,183 +61,74 @@ class HomeController extends GetxController
   }
 }
 
-class HomeAllController extends GetxController
-    with
-        StateMixin<List<thread_list_data_>>,
-        GetSingleTickerProviderStateMixin {
+abstract class HomeFeedController extends GetxController
+    with StateMixin<List<thread_list_data_>> {
+  HomeFeedController(this.feedType);
+  final String feedType;
   List<thread_list_data_> result = [];
   RxBool isLoading = false.obs;
-
+  bool _requesting = false;
+  bool _hasMore = true;
   @override
   void onInit() {
     get();
     super.onInit();
   }
 
-  // 获取数据
-  void get() async {
-    try {
-      debugPrint('HomeAllController-get');
-      change(result, status: RxStatus.loading());
-      final response = await HomeApi.getThreadList();
-      final data = thread_list_.fromBuffer(response.data);
-      result.addAll(data.body.data);
-      change(result, status: RxStatus.success());
-    } catch (e) {
-      debugPrint(e.toString());
-      change(null, status: RxStatus.error('error'));
-    }
+  Future<void> get() => _load(reset: true);
+  Future<void> more() async {
+    if (result.isEmpty || !_hasMore) return;
+    await _load(reset: false);
   }
 
-  // 加载更多
-  void more() async {
-    try {
-      debugPrint('HomeAllController-more');
-      isLoading(true);
-      final response = await HomeApi.getThreadList(skip: result.last.id);
-      final data = thread_list_.fromBuffer(response.data);
-      result.addAll(data.body.data);
-      change(result, status: RxStatus.success());
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-    isLoading(false);
-  }
-
-  // 刷新
   Future<bool> reload() async {
+    await get();
+    return status.isSuccess || status.isEmpty;
+  }
+
+  Future<void> _load({required bool reset}) async {
+    if (_requesting) return;
+    _requesting = true;
+    isLoading(true);
+    if (reset) change(result, status: RxStatus.loading());
     try {
-      debugPrint('HomeAllController-reload');
-      final response = await HomeApi.getThreadList();
-      final data = thread_list_.fromBuffer(response.data);
-      result.clear();
-      result.addAll(data.body.data);
-      change(result, status: RxStatus.success());
-    } catch (e) {
-      debugPrint(e.toString());
+      final response = await HomeApi.getThreadList(
+          type: feedType, skip: reset ? 0 : result.last.id);
+      final bytes = response.data;
+      if (bytes is! List<int> || bytes.isEmpty)
+        throw const FormatException('首页返回了空响应');
+      final data = thread_list_.fromBuffer(bytes);
+      if (data.error) throw StateError('服务端拒绝加载首页数据');
+      if (isClosed) return;
+      if (reset) result.clear();
+      final items = data.body.data
+          .where((e) => !result.any((old) => old.id == e.id))
+          .toList();
+      result.addAll(items);
+      _hasMore = items.isNotEmpty;
+      change(result,
+          status: result.isEmpty ? RxStatus.empty() : RxStatus.success());
+    } catch (_) {
+      if (!isClosed && (reset || result.isEmpty)) {
+        change(null, status: RxStatus.error('原服务端请求未成功，请检查网络后重试，或使用网站资源。'));
+      }
+    } finally {
+      _requesting = false;
+      if (!isClosed) isLoading(false);
     }
-    return true;
   }
 }
 
-class HomeArtworkController extends GetxController
-    with
-        StateMixin<List<thread_list_data_>>,
-        GetSingleTickerProviderStateMixin {
-  List<thread_list_data_> result = [];
-  RxBool isLoading = false.obs;
-
-  @override
-  void onInit() {
-    get();
-    super.onInit();
-  }
-
-  // 获取数据
-  void get() async {
-    try {
-      debugPrint('HomeArtworkController-get');
-      change(result, status: RxStatus.loading());
-      final response = await HomeApi.getThreadList(type: 'artwork');
-      final data = thread_list_.fromBuffer(response.data);
-      result.addAll(data.body.data);
-      change(result, status: RxStatus.success());
-    } catch (e) {
-      debugPrint(e.toString());
-      change(null, status: RxStatus.error('error'));
-    }
-  }
-
-  // 加载更多
-  void more() async {
-    try {
-      debugPrint('HomeArtworkController-more');
-      isLoading(true);
-      final response =
-          await HomeApi.getThreadList(type: 'artwork', skip: result.last.id);
-      final data = thread_list_.fromBuffer(response.data);
-      result.addAll(data.body.data);
-      change(result, status: RxStatus.success());
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-    isLoading(false);
-  }
-
-  // 刷新
-  Future<bool> reload() async {
-    try {
-      debugPrint('HomeArtworkController-reload');
-      final response = await HomeApi.getThreadList(type: 'artwork');
-      final data = thread_list_.fromBuffer(response.data);
-      result.clear();
-      result.addAll(data.body.data);
-      change(result, status: RxStatus.success());
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-    return true;
-  }
+class HomeAllController extends HomeFeedController {
+  HomeAllController() : super('all');
 }
 
-class HomeCosplayController extends GetxController
-    with
-        StateMixin<List<thread_list_data_>>,
-        GetSingleTickerProviderStateMixin {
-  List<thread_list_data_> result = [];
-  RxBool isLoading = false.obs;
+class HomeArtworkController extends HomeFeedController {
+  HomeArtworkController() : super('artwork');
+}
 
-  @override
-  void onInit() {
-    get();
-    super.onInit();
-  }
-
-  // 获取数据
-  void get() async {
-    try {
-      debugPrint('HomeCosplayController-get');
-      change(result, status: RxStatus.loading());
-      final response = await HomeApi.getThreadList(type: 'cosplay');
-      final data = thread_list_.fromBuffer(response.data);
-      result.addAll(data.body.data);
-      change(result, status: RxStatus.success());
-    } catch (e) {
-      debugPrint(e.toString());
-      change(null, status: RxStatus.error('error'));
-    }
-  }
-
-  // 加载更多
-  void more() async {
-    try {
-      debugPrint('HomeCosplayController-more');
-      isLoading(true);
-      final response =
-          await HomeApi.getThreadList(type: 'cosplay', skip: result.last.id);
-      final data = thread_list_.fromBuffer(response.data);
-      result.addAll(data.body.data);
-      change(result, status: RxStatus.success());
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-    isLoading(false);
-  }
-
-  // 刷新
-  Future<bool> reload() async {
-    try {
-      debugPrint('HomeCosplayController-reload');
-      final response = await HomeApi.getThreadList(type: 'cosplay');
-      final data = thread_list_.fromBuffer(response.data);
-      result.clear();
-      result.addAll(data.body.data);
-      change(result, status: RxStatus.success());
-    } catch (e) {
-      debugPrint(e.toString());
-    }
-    return true;
-  }
+class HomeCosplayController extends HomeFeedController {
+  HomeCosplayController() : super('cosplay');
 }
 
 class HomeTagsController extends GetxController
@@ -260,7 +151,8 @@ class HomeTagsController extends GetxController
       List<Tag> tagsList =
           List<Tag>.from(response.data.map((e) => Tag.fromJson(e)));
       result.addAll(tagsList);
-      change(result, status: RxStatus.success());
+      change(result,
+          status: result.isEmpty ? RxStatus.empty() : RxStatus.success());
     } catch (e) {
       debugPrint(e.toString());
       change(null, status: RxStatus.error('error'));
@@ -276,7 +168,8 @@ class HomeTagsController extends GetxController
       List<Tag> tagsList =
           List<Tag>.from(response.data.map((e) => Tag.fromJson(e)));
       result.addAll(tagsList);
-      change(result, status: RxStatus.success());
+      change(result,
+          status: result.isEmpty ? RxStatus.empty() : RxStatus.success());
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -292,7 +185,8 @@ class HomeTagsController extends GetxController
           List<Tag>.from(response.data.map((e) => Tag.fromJson(e)));
       result.clear();
       result.addAll(tagsList);
-      change(result, status: RxStatus.success());
+      change(result,
+          status: result.isEmpty ? RxStatus.empty() : RxStatus.success());
     } catch (e) {
       debugPrint(e.toString());
     }

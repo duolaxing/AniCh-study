@@ -955,6 +955,10 @@ Widget buildSendDanmakuTextField(BangumiVodPageController controller) {
     '#ffc0cb', // 粉色
   ];
   void postDanmaku() async {
+    if (controller.isWebsiteOnly) {
+      SmartDialog.showToast('网站播放支持加载平台弹幕，请在弹幕源中搜索匹配。');
+      return;
+    }
     if (controller.danmakuText.value.isEmpty) {
       SmartDialog.showToast('请输入弹幕');
       return;

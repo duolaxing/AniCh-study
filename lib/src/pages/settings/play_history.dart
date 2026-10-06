@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:xs/src/services/open_website_video.dart';
 import 'package:xs/src/pages/settings/controller.dart';
 import 'package:xs/src/pages/settings/storage/play_history_storage.dart';
 import 'package:xs/src/utils/app_style.dart';
@@ -98,6 +99,12 @@ class PlayHistoryPage extends StatelessWidget {
                               },
                               child: InkWell(
                                 onTap: () {
+                                  if (item['websiteEpisode'] is Map) {
+                                    openWebsiteVideo(
+                                        keyword:
+                                            item['title']?.toString() ?? '');
+                                    return;
+                                  }
                                   Get.toNamed('/vod/${item['id']}', arguments: {
                                     'id': item['id'],
                                     'episode': item['episodes'].first['episode']

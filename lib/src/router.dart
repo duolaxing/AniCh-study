@@ -66,6 +66,7 @@ class AppRoute {
     // 搜索结果
     GetPage(name: '/search', page: () => const SearchPage()),
     GetPage(name: '/image_search', page: () => const ImageSearchPage()),
+    GetPage(name: '/website_player', page: () => const BangumiVodPage()),
 
     // 账号管理
     GetPage(name: '/account_settings', page: () => const AccountSettingsPage()),

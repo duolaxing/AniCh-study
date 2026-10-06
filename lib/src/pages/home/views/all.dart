@@ -1,3 +1,4 @@
+import 'package:xs/src/widgets/content_status.dart';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -232,9 +233,12 @@ class HomeAllView extends StatelessWidget {
                         ],
                       );
                     },
-                    onError: (error) {
-                      return const Text('加载失败');
-                    },
+                    onEmpty: ContentStatusView(
+                        title: '首页暂无内容', onRetry: controller.get),
+                    onError: (error) => ContentStatusView(
+                        title: '首页加载失败',
+                        detail: error ?? '',
+                        onRetry: controller.get),
                   ),
                 ),
               ));
