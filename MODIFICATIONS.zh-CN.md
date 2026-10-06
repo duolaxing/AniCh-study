@@ -53,7 +53,9 @@
 - 在线样例：B 站“樱花庄”返回 24 集，首段读取 2842 条弹幕；腾讯返回 24 集，首段读取 429 条弹幕。普通 BV 视频信息接口也返回有效信息。样例数量会随平台更新而变化。
 - 次元城搜索和分集读取成功；girigirilove 简中线路和 HTTPS 播放地址解析成功。
 
-没有完成的端到端验证：本机缺少 Visual Studio C++ 工具链和 Android SDK，未生成或运行 Windows EXE、Android APK；次元城账号登录与登录后播放、girigirilove 人工验证码提交以及 trace.moe 真实截图识别尚未在运行中的应用内验证。网站接口、访问限制和资源可用性仍由各平台决定。
+GitHub Actions 在 2026-10-06 完成 Windows x64 Release 原生构建，云端依赖解析、静态检查（允许已有警告／提示）、21 项测试、EXE 编译及产物校验全部成功。生成 `xs.exe` 和完整运行目录，ZIP 大小 34,997,251 字节。构建源码提交为 `b10dfff98a5a2684e35ffddc8a8b9bc63874a725`。
+
+没有完成的端到端验证：尚未在用户电脑运行 Windows 程序；未生成 Android APK；次元城账号登录与登录后播放、girigirilove 人工验证码提交以及 trace.moe 真实截图识别尚未在运行中的应用内验证。网站接口、访问限制和资源可用性仍由各平台决定。
 
 ## 构建与学习
 
@@ -76,7 +78,9 @@ Windows 构建需要 Visual Studio 的“使用 C++ 的桌面开发”组件。�
 
 成功后下载 `AniCh-Windows-x64` artifact，完整解压后运行 `xs.exe`。必须同时保留 DLL 和 `data` 文件夹；不能只复制 EXE。产物保留 7 天，没有使用大型付费 runner 或额外缓存。
 
-此工作流已编写，GitHub 远程构建尚待触发及验证。本地的 bundle 编译结果不代表 Windows 原生构建已成功。
+本次 [成功构建记录](https://github.com/duolaxing/AniCh-study/actions/runs/37455667318) 和 [Windows 产物下载](https://github.com/duolaxing/AniCh-study/actions/runs/37455667318/artifacts/11408679128)。当前产物在 2026-10-13 到期；之后可重新运行该工作流。需登录 GitHub 下载 Actions artifact。
+
+ZIP 的 SHA-256：`f89b897c99defc2dac8812e6d65d641317d63e6cd5f7f1df19ac1b1596a8b710`。
 
 主要入口：
 
@@ -90,7 +94,6 @@ Windows 构建需要 Visual Studio 的“使用 C++ 的桌面开发”组件。�
 | 字幕类型判据 | `lib/src/utils/subtitle_language.dart` |
 | 图片识别接口和页面 | `lib/src/services/image_search.dart`、`lib/src/pages/image_search/view.dart` |
 | 播放速度控件 | `lib/src/widgets/player/controls.dart` |
-| 回归测试 | `test/source_features_test.dart`、`test/widget_test.dart` |
+| 回归测试 | `test/source_features_test.dart`、`test/widget_test.dart`、`test/update_test.dart` |
 
 附带补丁可应用到上述上游提交：先检查 `git apply --check AniCh-changes.patch`，再执行 `git apply AniCh-changes.patch`。已有个人修改的仓库应先保存当前工作再核对补丁。
-

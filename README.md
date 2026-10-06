@@ -1,6 +1,8 @@
 <h1 align="center">AniCh</h1>
 
-本地个人学习修改版：[功能、使用方式与验证说明](MODIFICATIONS.zh-CN.md)。
+个人学习修改版：[功能、使用方式与验证说明](MODIFICATIONS.zh-CN.md)。
+
+[Windows EXE 构建成功记录](https://github.com/duolaxing/AniCh-study/actions/runs/37455667318) · [下载 Windows x64 便携版](https://github.com/duolaxing/AniCh-study/actions/runs/37455667318/artifacts/11408679128)
 
 <p align="center">一个支持超分辨率的在线动漫弹幕APP。多平台，多番剧源，多弹幕，高清无广告。追番看番必备软件。</p>
 
