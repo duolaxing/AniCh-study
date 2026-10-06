@@ -51,7 +51,7 @@
 - 首页请求增加连接与接收超时，拒绝空 HTTP 响应和错误数据包。有效空列表显示“首页暂无内容”，失败显示“首页加载失败”，两者都提供重试与网站资源入口。
 - 首页与番剧页底部新增“网站资源”。次元城、girigirilove 可直接搜索、选择线路和集数，通过独立播放页播放，无需原服务端提供番剧详情、剧集或视频地址。播放页仍支持右侧弹幕匹配与右下角倍速。
 - 网站播放使用独立的本地视频标识保存弹幕匹配和播放进度。历史记录点击后重新搜索原番剧，选择原线路和集数即可续播；不保存可能过期的签名播放地址。
-- 此修复在本地通过首页空数据、错误数据包、重试恢复、网站入口及网站播放不请求原服务端的回归测试。新版 Windows 原生构建结果以最新 Actions 成功任务为准。
+- 此修复在本地和 GitHub Actions 通过 26 项测试，包含首页空数据、错误数据包、重试恢复、网站入口及网站播放不请求原服务端的回归测试。Windows x64 Release 构建成功，源码提交为 `2789c97ea7378a20a969390eb10dabf82a119203`。
 
 在 Flutter 3.47.5 / Dart 3.13.4 下完成：
 
@@ -86,9 +86,9 @@ Windows 构建需要 Visual Studio 的“使用 C++ 的桌面开发”组件。�
 
 成功后下载 `AniCh-Windows-x64` artifact，完整解压后运行 `xs.exe`。必须同时保留 DLL 和 `data` 文件夹；不能只复制 EXE。产物保留 7 天，没有使用大型付费 runner 或额外缓存。
 
-本次 [成功构建记录](https://github.com/duolaxing/AniCh-study/actions/runs/37455667318) 和 [Windows 产物下载](https://github.com/duolaxing/AniCh-study/actions/runs/37455667318/artifacts/11408679128)。当前产物在 2026-10-13 到期；之后可重新运行该工作流。需登录 GitHub 下载 Actions artifact。
+首页修复版的 [成功构建记录](https://github.com/duolaxing/AniCh-study/actions/runs/37465040182) 和 [Windows 产物下载](https://github.com/duolaxing/AniCh-study/actions/runs/37465040182/artifacts/11413859530)。ZIP 大小 35,002,616 字节，产物在 2026-10-13 到期；之后可重新运行该工作流。需登录 GitHub 下载 Actions artifact。
 
-ZIP 的 SHA-256：`f89b897c99defc2dac8812e6d65d641317d63e6cd5f7f1df19ac1b1596a8b710`。
+首页修复版 ZIP 的 SHA-256：`34e6e26ac15c3a6185132f0ca434cbe1e5a92f496bd9db4c76857525e13e64ba`。
 
 主要入口：
 

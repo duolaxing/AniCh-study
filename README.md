@@ -2,7 +2,7 @@
 
 个人学习修改版：[功能、使用方式与验证说明](MODIFICATIONS.zh-CN.md)。
 
-[Windows EXE 构建与最新产物](https://github.com/duolaxing/AniCh-study/actions/workflows/build-windows.yml)。请选择最新成功构建中的 `AniCh-Windows-x64`。
+[首页空白修复版构建记录](https://github.com/duolaxing/AniCh-study/actions/runs/37465040182) · [下载 Windows x64 便携版（首页修复版）](https://github.com/duolaxing/AniCh-study/actions/runs/37465040182/artifacts/11413859530)
 
 首页接口暂时不可用时会显示加载失败或空数据提示。点击底部“网站资源”可独立搜索次元城、girigirilove 并选择线路、集数播放；仍受网站自身的登录、验证码及资源可用性限制。
 
