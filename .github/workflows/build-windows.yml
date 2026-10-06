@@ -1,0 +1,87 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/build-windows.yml'
+      - 'lib/**'
+      - 'test/**'
+      - 'windows/**'
+      - 'assets/**'
+      - 'fonts/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows:
+    if: github.event.repository.private == false
+    runs-on: windows-2022
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      FLUTTER_SUPPRESS_ANALYTICS: 'true'
+      PUB_HOSTED_URL: https://pub.dev
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: false
+
+      - name: Resolve locked dependencies
+        run: |
+          # Use pub.dev on the hosted runner while preserving locked versions/hashes.
+          $lockPath = Join-Path $PWD 'pubspec.lock'
+          $lockText = [IO.File]::ReadAllText($lockPath)
+          [IO.File]::WriteAllText($lockPath, $lockText.Replace('https://pub.flutter-io.cn', 'https://pub.dev'))
+          flutter config --enable-windows-desktop
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          flutter pub get --enforce-lockfile
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Analyze Dart code
+        run: flutter analyze --no-pub --no-fatal-infos --no-fatal-warnings
+
+      - name: Run tests
+        run: flutter test --no-pub --no-test-assets
+
+      - name: Build release EXE
+        run: flutter build windows --release --no-pub
+
+      - name: Verify complete Windows bundle
+        run: |
+          $bundle = Join-Path $PWD 'build/windows/x64/runner/Release'
+          if (!(Test-Path (Join-Path $bundle 'xs.exe'))) { throw 'Windows EXE was not generated' }
+          if (!(Test-Path (Join-Path $bundle 'flutter_windows.dll'))) { throw 'Flutter runtime DLL is missing' }
+          if (!(Test-Path (Join-Path $bundle 'data/flutter_assets'))) { throw 'Flutter assets are missing' }
+          @'
+          AniCh personal study build (Windows x64)
+          Extract the entire ZIP into a folder and run xs.exe.
+          Keep the DLL files and data folder beside xs.exe.
+          This is a portable release bundle, not an installer.
+          '@ | Set-Content -LiteralPath (Join-Path $bundle 'START-HERE.txt') -Encoding utf8
+          "Built commit: $env:GITHUB_SHA" | Add-Content -LiteralPath (Join-Path $bundle 'START-HERE.txt')
+
+      - name: Upload Windows application
+        uses: actions/upload-artifact@v4
+        with:
+          name: AniCh-Windows-x64
+          path: build/windows/x64/runner/Release/
+          if-no-files-found: error
+          retention-days: 7
